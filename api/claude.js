@@ -19,8 +19,6 @@ const limiter = rateLimit({
 module.exports = async (req, res) => {
   // Simple API key auth
   const clientKey = req.headers["x-client-key"];
-  console.log("Received x-client-key:", clientKey);
-  console.log("Expected CLIENT_API_KEY:", process.env.CLIENT_API_KEY);
   if (clientKey !== process.env.CLIENT_API_KEY) {
     return res.status(401).json({ error: "Unauthorized" });
   }

@@ -62,7 +62,7 @@ module.exports = async (req, res) => {
         },
       }
     );
-    const summary = response.data.choices[0].message.content;
+    const summary = response.data.content?.[0]?.text || "";
     summaryCache.set(cacheKey, summary);
     res.status(200).json(response.data);
   } catch (err) {

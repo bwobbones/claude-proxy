@@ -1,10 +1,20 @@
 const axios = require("axios");
 
+const ttsCache = new Map(); // key: text string, value: Buffer (audio)
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
   const { text, voice = "alloy", model = "tts-1" } = req.body;
+  const cacheKey = `${model}|${voice}|${text.trim().toLowerCase()}`;
+
+  // Check cache
+  if (ttsCache.has(cacheKey)) {
+    res.setHeader("Content-Type", "audio/mpeg");
+    return res.send(ttsCache.get(cacheKey));
+  }
+
   if (!text) return res.status(400).json({ error: "Missing text" });
 
   try {
@@ -28,6 +38,7 @@ module.exports = async (req, res) => {
         .json({ error: `OpenAI API error: ${response.status} ${errorText}` });
     }
     res.setHeader("Content-Type", "audio/mpeg");
+    ttsCache.set(cacheKey, response.data);
     res.send(response.data);
   } catch (err) {
     res.status(500).json({ error: err.message });

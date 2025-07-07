@@ -16,6 +16,8 @@ const limiter = rateLimit({
   },
 });
 
+const summaryCache = new Map(); // key: prompt string, value: summary
+
 module.exports = async (req, res) => {
   // Simple API key auth
   const clientKey = req.headers["x-client-key"];
@@ -33,6 +35,13 @@ module.exports = async (req, res) => {
   const { prompt } = req.body;
   if (!prompt) {
     return res.status(400).json({ error: "Missing prompt" });
+  }
+
+  const cacheKey = prompt.trim().toLowerCase();
+
+  // Check cache
+  if (summaryCache.has(cacheKey)) {
+    return res.json({ content: [{ text: summaryCache.get(cacheKey) }] });
   }
 
   try {
@@ -53,6 +62,8 @@ module.exports = async (req, res) => {
         },
       }
     );
+    const summary = response.data.choices[0].message.content;
+    summaryCache.set(cacheKey, summary);
     res.status(200).json(response.data);
   } catch (err) {
     const msg = err.response?.data?.error || err.message || "Unknown error";

@@ -17,8 +17,16 @@ module.exports = async (req, res) => {
           "Content-Type": "application/json",
         },
         responseType: "arraybuffer",
+        validateStatus: () => true, // Always resolve, so we can check status
       }
     );
+    if (response.status !== 200) {
+      const errorText = Buffer.from(response.data).toString("utf8");
+      console.error("[TTS] OpenAI API error:", response.status, errorText);
+      return res
+        .status(500)
+        .json({ error: `OpenAI API error: ${response.status} ${errorText}` });
+    }
     res.setHeader("Content-Type", "audio/mpeg");
     res.send(response.data);
   } catch (err) {
